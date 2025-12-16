@@ -12,6 +12,9 @@ type Payment = {
     name: string;
     room_id: number | null;
   };
+  proof?: {
+    file_url: string;
+  } | null;
 };
 
 export default function PaymentsTable() {
@@ -21,6 +24,10 @@ export default function PaymentsTable() {
 
   const AMOUNT = 10000;
   const currentYear = new Date().getFullYear();
+
+  const [proofs, setProofs] = useState<{ room_id: number; file_url: string }[]>(
+    []
+  );
 
   // Generate months for current year
   const months = Array.from({ length: 12 }, (_, i) => {
@@ -32,10 +39,19 @@ export default function PaymentsTable() {
       }),
     };
   });
+  async function fetchProofs(selectedMonth: string) {
+    const { data } = await supabase
+      .from("payment_proofs")
+      .select("room_id, file_url")
+      .eq("month", selectedMonth);
+
+    setProofs(data || []);
+  }
 
   useEffect(() => {
     if (month) {
       fetchPayments(month);
+      fetchProofs(month);
     } else {
       setPayments([]);
       setHasPayments(false);
@@ -47,15 +63,15 @@ export default function PaymentsTable() {
       .from("payments")
       .select(
         `
-        id,
-        month,
-        amount,
-        status,
-        tenant:tenants (
-          name,
-          room_id
-        )
-      `
+      id,
+      month,
+      amount,
+      status,
+      tenant:tenants (
+        name,
+        room_id
+      )
+    `
       )
       .eq("month", selectedMonth)
       .order("id");
@@ -68,6 +84,21 @@ export default function PaymentsTable() {
       setHasPayments(false);
     }
   }
+
+  useEffect(() => {
+    if (payments.length === 0 || proofs.length === 0) return;
+
+    const merged = payments.map((p) => {
+      const proof = proofs.find((pr) => pr.room_id === p.tenant.room_id);
+
+      return {
+        ...p,
+        proof: proof ? { file_url: proof.file_url } : null,
+      };
+    });
+
+    setPayments(merged);
+  }, [proofs]);
 
   async function generatePayments() {
     if (!month || hasPayments) return;
@@ -138,6 +169,7 @@ export default function PaymentsTable() {
             <th className="p-3 text-left">Room</th>
             <th className="p-3 text-left">Amount</th>
             <th className="p-3 text-left">Status</th>
+            <th className="p-3 text-left">Proof</th>
           </tr>
         </thead>
         <tbody>
@@ -156,6 +188,20 @@ export default function PaymentsTable() {
                   <option value="paid">Paid</option>
                   <option value="late">Late</option>
                 </select>
+              </td>
+              <td className="p-3">
+                {p.proof ? (
+                  <a
+                    href={p.proof.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  >
+                    View Proof
+                  </a>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
               </td>
             </tr>
           ))}

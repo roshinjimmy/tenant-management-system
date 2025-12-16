@@ -271,7 +271,7 @@ export default function TenantsTable() {
                   setNewTenant({ ...newTenant, room_id: e.target.value })
                 }
               >
-                <option value="">Select Room (optional)</option>
+                <option value="">Select Room</option>
                 {availableRooms.map((room) => (
                   <option key={room.id} value={room.id}>
                     {room.room_no}
