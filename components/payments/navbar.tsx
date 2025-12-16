@@ -16,13 +16,11 @@ export default function Navbar() {
 
   return (
     <nav className="bg-white border-b">
-      <div className="max-w-6xl mx-auto px-4 py-2 flex items-center">
+      <div className="w-full max-w-6xl mx-auto px-4 py-2 flex items-center justify-between">
         <span className="font-semibold text-base text-gray-900 select-none">
           Tenant Management
         </span>
-
-        {/* Push links to the right */}
-        <div className="ml-auto flex gap-4 items-center">
+        <div className="flex gap-3 items-center">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
